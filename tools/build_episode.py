@@ -331,13 +331,14 @@ def make_hud(sc):
                     fill=(200, 40, 40, 255) if on else (46, 20, 20, 255))
     d.text((bx + 2, by + bh + 10), f"HP {hp}/100", font=ImageFont.truetype(FONT_MONO, 20),
            fill=(240, 234, 220, 235))
-    # Часы по центру (короткая подпись — не сталкивается с чипами инвентаря)
+    # Часы по центру (при полном инвентаре — ниже чипов, чтобы не перекрывались)
     clock = sc.get("clock", "")
     label = clock
+    clock_y = 84 if sc.get("food") == 0 else 22
     tw = d.textlength(label, font=ImageFont.truetype(FONT_MONO, 26))
-    d.rounded_rectangle([W/2 - tw/2 - 18, 22, W/2 + tw/2 + 18, 66], radius=8,
+    d.rounded_rectangle([W/2 - tw/2 - 18, clock_y, W/2 + tw/2 + 18, clock_y + 44], radius=8,
                         fill=(8, 8, 10, 205), outline=(216, 178, 106, 255), width=3)
-    d.text((W/2 - tw/2, 31), label, font=ImageFont.truetype(FONT_MONO, 26), fill=(240, 234, 220, 255))
+    d.text((W/2 - tw/2, clock_y + 9), label, font=ImageFont.truetype(FONT_MONO, 26), fill=(240, 234, 220, 255))
     # Инвентарь справа: доски/факел/топор/вода/бинт
     chips = []
     chips.append((icon_plank, f"x{sc.get('planks', 0)}", 150))
