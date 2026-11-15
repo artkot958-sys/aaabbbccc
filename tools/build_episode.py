@@ -27,8 +27,34 @@ except Exception:
     FFMPEG = "ffmpeg"
 
 W, H, FPS = 1920, 1080, 24
-FONT_BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-FONT_MONO = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf"
+def _find_font(candidates, env_var, label):
+    override = os.environ.get(env_var)
+    if override:
+        if Path(override).exists():
+            return override
+        raise RuntimeError(f"{env_var} задан, но файл не найден: {override}")
+    for path in candidates:
+        if Path(path).exists():
+            return path
+    raise RuntimeError(
+        f"Не найден шрифт для {label}. Укажите его путь в переменной окружения {env_var} "
+        f"(любой TTF с кириллицей), например: EP01_FONT_BOLD=/path/to/font.ttf")
+
+FONT_BOLD = _find_font([
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+    "C:/Windows/Fonts/arialbd.ttf",
+    "C:/Windows/Fonts/segoeuib.ttf",
+    "C:/Windows/Fonts/calibrib.ttf",
+    "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+    "/Library/Fonts/Arial Bold.ttf",
+], "EP01_FONT_BOLD", "заголовков")
+FONT_MONO = _find_font([
+    "/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf",
+    "C:/Windows/Fonts/consola.ttf",
+    "C:/Windows/Fonts/courbd.ttf",
+    "/System/Library/Fonts/Menlo.ttc",
+    "/Library/Fonts/Menlo.ttc",
+], "EP01_FONT_MONO", "HUD")
 SR = 44100
 
 def f(name):
@@ -575,7 +601,7 @@ def main():
     list_file = OUT / "concat.txt"
     with open(list_file, "w") as fh:
         for s in segments:
-            fh.write(f"file '{s.resolve()}'\n")
+            fh.write(f"file '{s.resolve().as_posix()}'\n")
     concat_mp4 = OUT / "ep01_video_only.mp4"
     subprocess.run([FFMPEG, "-y", "-f", "concat", "-safe", "0", "-i", str(list_file),
                     "-c", "copy", str(concat_mp4)], check=True)
