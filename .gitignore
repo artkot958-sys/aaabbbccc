@@ -1,3 +1,4 @@
 .venv/
 assets/video/*
 !assets/video/EP01_ono-voshlo.mp4
+__pycache__/
