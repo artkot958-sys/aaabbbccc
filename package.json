@@ -1,0 +1,26 @@
+{
+  "name": "aaabbbccc",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build:audio": ".venv/bin/python scripts/build_audio.py",
+    "render": "node scripts/render_video.js",
+    "start": "node server.js",
+    "test": "node scripts/smoke_test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/artkot958-sys/aaabbbccc.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/artkot958-sys/aaabbbccc/issues"
+  },
+  "homepage": "https://github.com/artkot958-sys/aaabbbccc#readme",
+  "dependencies": {
+    "@napi-rs/canvas": "^1.1.1"
+  }
+}

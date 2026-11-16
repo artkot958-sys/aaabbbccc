@@ -1,0 +1,8 @@
+node_modules/
+.venv/
+public/audio/_*.wav
+__pycache__/
+*.pyc
+.DS_Store
+
+public/audio/master.wav
