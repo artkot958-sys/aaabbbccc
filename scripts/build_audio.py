@@ -4,18 +4,18 @@ import os, re, json, math, subprocess
 from pathlib import Path
 import numpy as np
 from scipy.io import wavfile
-ROOT=Path(__file__).resolve().parents[1]; A=ROOT/'public/audio'; FFMPEG=str(ROOT/'.venv/lib/python3.11/site-packages/imageio_ffmpeg/binaries/ffmpeg-linux-x86_64-v9.0.2')
-SCRIPT=json.load(open(ROOT/'scripts/story.json',encoding='utf-8'))
+ROOT=Path(__file__).resolve().parents[1]; PROJECT=os.getenv('PROJECT','main'); BASE=ROOT/'public'/('island' if PROJECT=='island' else ''); A=BASE/'audio'; A.mkdir(parents=True,exist_ok=True); FFMPEG=str(ROOT/'.venv/lib/python3.11/site-packages/imageio_ffmpeg/binaries/ffmpeg-linux-x86_64-v9.0.2')
+SCRIPT=json.load(open(ROOT/'scripts'/('island_story.json' if PROJECT=='island' else 'story.json'),encoding='utf-8'))
 
 def run(args): subprocess.run(args,check=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
 def syllables(word):
     w=re.sub(r'[^а-яёА-ЯЁ]','',word.lower()); v='аеёиоуыэюя'; return max(1,sum(ch in v for ch in w))
 def main():
-    wavs=[]; durations=[]
-    for i in range(len(SCRIPT)):
+    wavs=[]; durations=[]; tempo=1.0 if PROJECT=='island' else 1.2
+    for i in range(len(SCRIPT)): 
         src=A/f'clip_{i+1:02d}.mp3'; out=A/f'_fast_{i+1:02d}.wav'
         if not src.exists(): raise FileNotFoundError(f'Missing narration clip {src.name}; synthesize clips 01–{len(SCRIPT):02d} with the selected voice first.')
-        run([FFMPEG,'-y','-i',str(src),'-af','atempo=1.2,aresample=44100','-ac','2','-ar','44100','-c:a','pcm_s16le',str(out)])
+        run([FFMPEG,'-y','-i',str(src),'-af',f'atempo={tempo},aresample=44100','-ac','2','-ar','44100','-c:a','pcm_s16le',str(out)])
         rate,data=wavfile.read(out); dur=len(data)/rate; wavs.append((out,data));durations.append(dur)
     words=[]; chapters=[]; cursor=0
     for i,(item,(_,audio),dur) in enumerate(zip(SCRIPT,wavs,durations)):
@@ -24,7 +24,7 @@ def main():
         available=max(.1,dur-.16); spans=available*weights/weights.sum(); st=cursor+.055
         for p,span in zip(parts,spans):
             words.append({'text':p,'start':round(st,3),'end':round(st+span,3),'segment':i});st+=span
-        chapters.append({'index':i,'start':round(cursor,3),'end':round(cursor+dur,3),'title':item['place'],'day':item['day'],'money':item['money'],'audio':f'clip_{i+1:02d}.mp3','text':sentence,'kind':item['kind']})
+        chapters.append({'index':i,'start':round(cursor,3),'end':round(cursor+dur,3),'title':item['place'],'day':item['day'],'money':item.get('money',item.get('metric','')),'metricLabel':item.get('metricLabel','БЮДЖЕТ'),'audio':f'clip_{i+1:02d}.mp3','text':sentence,'kind':item['kind']})
         cursor+=dur+.12
     total=cursor-.12
     # Assemble PCM narration with tiny interchapter breath gaps.
@@ -50,7 +50,7 @@ def main():
         else: sig=sosfilt(butter(2,min(freq,12000),fs=44100,output='sos'),rng.normal(0,1,z-a))
         fx[a:z]+=amount*env*sig
     for ch in chapters:
-        st=ch['start']; kind=ch['kind']
+        st=ch['start']; kind=ch['kind'].removeprefix('island_')
         if kind=='map':
             for q in range(8):add_burst(st+5+q*.55,.12,.045,'noise',2100)
         elif kind=='build':
@@ -62,9 +62,15 @@ def main():
             add_burst(st+10,8,.22,'tone',39);add_burst(st+12,6,.12,'noise',150)
         elif kind=='after':
             for q in range(16):add_burst(st+8+q*.52,.06,.05,'tone',1650)
+        elif kind in ('wreck','storm'):
+            add_burst(st+2,7,.10,'tone',kind=='wreck' and 58 or 42);add_burst(st+5,6,.10,'noise',420)
+        elif kind=='fire':
+            for q in range(12):add_burst(st+4+q*.6,.08,.035,'noise',2400)
+        elif kind=='rescue':
+            for q in range(8):add_burst(st+10+q*.55,.08,.06,'tone',1300)
     mix=np.clip(music+fx,-.78,.78); stereo=np.column_stack((mix,mix*.94)).astype(np.float32); wavfile.write(A/'_score.wav',44100,stereo)
     run([FFMPEG,'-y','-i',str(A/'_narration.wav'),'-i',str(A/'_score.wav'),'-filter_complex','[0:a]volume=1.0[n];[1:a]volume=0.62[m];[n][m]amix=inputs=2:duration=first:dropout_transition=2,alimiter=limit=0.92[out]','-map','[out]','-ar','44100','-ac','2','-c:a','pcm_s16le',str(A/'master.wav')])
     run([FFMPEG,'-y','-i',str(A/'master.wav'),'-codec:a','libmp3lame','-b:a','192k',str(A/'master.mp3')])
-    json.dump({'width':1920,'height':1080,'fps':30,'duration':round(total,3),'chapters':chapters,'words':words},open(ROOT/'public/timeline.json','w',encoding='utf-8'),ensure_ascii=False,indent=2)
+    json.dump({'width':1920,'height':1080,'fps':30,'duration':round(total,3),'chapters':chapters,'words':words},open(BASE/'timeline.json','w',encoding='utf-8'),ensure_ascii=False,indent=2)
     print(f'Created {len(words)} word cues, {len(chapters)} chapters, {total:.2f}s master')
 if __name__=='__main__':main()

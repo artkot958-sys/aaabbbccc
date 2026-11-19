@@ -6,3 +6,5 @@ __pycache__/
 .DS_Store
 
 public/audio/master.wav
+public/island/audio/_*.wav
+public/island/audio/master.wav

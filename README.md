@@ -1,20 +1,17 @@
-# 365 дней до ядерной войны — анимационный фильм
+# 2D survival-анимации на русском
 
-Русскоязычный side-view survival-эпизод длительностью **9:47**: 1920×1080, 16:9, 30 fps. В видео — озвучка, музыкальная дорожка, пословные караоке-субтитры, 20 глав, боковой разрез поверхности и подземного убежища.
+В проекте два side-view эпизода 1920×1080, 30 fps, с русской озвучкой, музыкой, пословными караоке-субтитрами и полноэкранным браузерным плеером:
 
-## Скачать и посмотреть
+1. **«365 дней до ядерной войны»** — 9:47, 20 глав. Скачать: [`public/video.mp4`](public/video.mp4) · [озвучка](public/audio/master.mp3) · [плеер](http://localhost:4173/)
+2. **«100 дней до спасения на острове»** — 8:48, 19 глав, новый мужской голос и короткий динамичный хук в начале. Скачать: [`public/island/video.mp4`](public/island/video.mp4) · [озвучка](public/island/audio/master.mp3) · [плеер](http://localhost:4173/island/)
 
-- Готовый MP4: [`public/video.mp4`](public/video.mp4)
-- Мастер-аудио: [`public/audio/master.mp3`](public/audio/master.mp3)
-- Полноэкранный интерактивный плеер: `npm start`
-
-## Локальный запуск
+## Запуск плееров
 
 ```bash
 npm start
 ```
 
-Откройте `http://localhost:4173`. Плеер поддерживает полноэкранный режим, перемотку и переходы по главам.
+Плееры поддерживают полноэкранный режим, перемотку, переход к главам и скачивание MP4/MP3.
 
 ## Пересборка
 
@@ -22,9 +19,8 @@ npm start
 npm install
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
-npm run build:audio
-npm run render
-npm test
+npm run build:audio && npm run render && npm test
+PROJECT=island npm run build:island && npm run render:island && npm run test:island
 ```
 
-`public/timeline.json` содержит временные интервалы для каждого слова. `scripts/story.json` — полный текст и постановка сцен. Двадцать фрагментов русской озвучки находятся в `public/audio/clip_01.mp3`–`clip_20.mp3`. Мастер WAV генерируется при сборке, но исключён из Git, чтобы не хранить избыточный несжатый артефакт.
+`public/{,island/}timeline.json` содержит пословные интервалы. Сценарии расположены в `scripts/story.json` и `scripts/island_story.json`. Несжатые мастер WAV-файлы генерируются при сборке, но исключены из Git.

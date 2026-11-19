@@ -6,6 +6,9 @@
   "scripts": {
     "build:audio": ".venv/bin/python scripts/build_audio.py",
     "render": "node scripts/render_video.js",
+    "build:island": "PROJECT=island .venv/bin/python scripts/build_audio.py",
+    "render:island": "PROJECT=island node scripts/render_video.js",
+    "test:island": "PROJECT=island node scripts/smoke_test.js",
     "start": "node server.js",
     "test": "node scripts/smoke_test.js"
   },
