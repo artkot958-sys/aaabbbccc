@@ -36,8 +36,32 @@
     c.beginPath();c.ellipse(3,-113+bob,20,24,.03,0,6.283);c.fillStyle='#b9805d';c.fill();c.lineWidth=3;c.strokeStyle='#282623';c.stroke();
     c.beginPath();c.arc(1,-124+bob,20,Math.PI,Math.PI*2);c.fillStyle='#292624';c.fill();c.fillStyle='#211e1b';c.beginPath();c.arc(10,-114+bob,2.5,0,6.283);c.fill();line(c,13,-103+bob,20,-102+bob,'#30251f',2);c.restore();
   }
-  function islandAction(c,kind,t,local){
+  function islandAction(c,kind,t,local,ch){
     let walkX=340+Math.min(local*14,360);
+    // These two painted plates have deliberately different ground planes. Keep
+    // the staging local to their location IDs; the other scenes retain their
+    // established blocking and baseline.
+    if(ch.location==='storm_ship'){
+      const ease=(a,p)=>{const q=Math.max(0,Math.min(1,(local-a)/p));return q*q*(3-2*q)};
+      const x1=430-80*ease(3,5)+95*ease(15,5),x2=550+120*ease(3,5)-105*ease(13,6);
+      const p1=local<3?'storm':local<8?'walk':local<15?'pull':local<19?'walk':'carry';
+      const p2=local<3?'storm':local<8?'walk':local<13?'carry':local<19?'walk':'idle';
+      actor(c,x1,632,local,p1,1.02,'#59636e');actor(c,x2,632,local+1,p2,.9,'#74836b');
+      // Salvage stays on the same beach plane as the survivors, not mid-air.
+      rr(c,655,599,52,31,4,'#ad8a60','#473d31',3);line(c,650,611,620,603,'#eadaba',3);return;
+    }
+    if(ch.location==='raincatch_cliff'){
+      const ease=(a,p)=>{const q=Math.max(0,Math.min(1,(local-a)/p));return q*q*(3-2*q)};
+      const ridgeX=535+175*ease(2.5,5),shoreX=790-135*ease(1,5);
+      const ridgeBase=280-(ridgeX-535)*.405;
+      const ridgePose=local<2.5?'scan':local<7.5?'walk':'pull';
+      const shorePose=local<6?'walk':local<16?'pour':'carry';
+      // One survivor climbs the visible rock shelf; the other works beside the pool.
+      actor(c,ridgeX,ridgeBase,local,ridgePose,.70,'#61705b');
+      actor(c,shoreX,635,local+1,shorePose,.96,'#8a6852');
+      // Catching container is grounded beside the pool, aligned to the foreground.
+      rr(c,640,597,48,38,6,'#a8a07c','#413a30',3);c.fillStyle='#b8d2cb';c.fillRect(644,616,40,15);line(c,674,605,693,625,'#c2b79d',4);return;
+    }
     if(kind==='island_wreck'){actor(c,500,417,t,'pull',1.05,'#59636e');actor(c,286,417,t+.5,'wave',.9,'#74836b');rr(c,645,388,52,31,4,'#ad8a60','#473d31',3);line(c,640,400,610,392,'#eadaba',3)}
     else if(kind==='island_shore'){actor(c,440,417,t,'carry',1.05,'#6b735b');actor(c,695,417,t+1,'carry',.88,'#8d644f');rr(c,515+Math.sin(t*1.5)*10,382,57,34,4,'#aa8259','#45392f',3)}
     else if(kind==='island_signal'){actor(c,450,417,t,'wave',1.05,'#66725c');let beam=30+25*(.5+.5*Math.sin(t*9));c.save();c.globalAlpha=.35;c.fillStyle='#fff3bb';c.beginPath();c.moveTo(482,286);c.lineTo(665,286-beam);c.lineTo(665,286+beam);c.closePath();c.fill();c.restore()}
@@ -191,7 +215,7 @@
   function hud(c,ch){rr(c,30,26,486,92,10,'rgba(30,27,28,.88)');rr(c,30,26,8,92,4,'#d99b42');label(c,'ЛОКАЦИЯ',53,51,12,'#dcb36c');label(c,ch.title,53,77,20,'#f5eee3','900');label(c,ch.day,53,103,14,'#d4c8b7','700');rr(c,W-250,27,218,52,11,'rgba(30,27,28,.88)');label(c,ch.metricLabel||'БЮДЖЕТ',W-229,48,10,'#dcb36c');label(c,ch.money||ch.metric||'',W-229,68,19,'#fff3e1','900')}
   function wrap(c,ws,max,font){c.font=font;let lines=[],line=[];for(let w of ws){if(line.length&&c.measureText([...line,w].join(' ')).width>max){lines.push(line);line=[w]}else line.push(w)}if(line.length)lines.push(line);return lines}
   function captions(c,t,data){let a=data.words.find(w=>t>=w.start&&t<w.end);if(!a)return;let chunk=data.words.filter(w=>w.segment===a.segment&&w.start>=Math.max(0,a.start-2.1)&&w.start<=a.start+2.3),ws=chunk.map(w=>w.text.toUpperCase()),font='900 35px Rubik',lines=wrap(c,ws,1130,font),y=H-58-(lines.length-1)*43,k=0;c.font=font;c.textBaseline='middle';for(let li=0;li<lines.length;li++){let widths=lines[li].map(w=>c.measureText(w).width),gap=16,total=widths.reduce((u,v)=>u+v,0)+gap*(widths.length-1),x=(W-total)/2;for(let j=0;j<lines[li].length;j++){let cue=chunk[k++],active=t>=cue.start&&t<cue.end;c.textAlign='center';c.lineJoin='round';c.strokeStyle='rgba(20,17,17,.98)';c.lineWidth=10;c.strokeText(lines[li][j],x+widths[j]/2,y+li*43);c.fillStyle=active?'#fff':'#c6c1bb';c.fillText(lines[li][j],x+widths[j]/2,y+li*43);x+=widths[j]+gap}}}
-  function draw(ctx,t,data){let ch=data.chapters.find(c=>t>=c.start&&t<c.end)||data.chapters[data.chapters.length-1],kind=ch.kind||'city',local=t-ch.start,isIsland=ISLAND.has(kind);ctx.save();let shake=kind==='impact'?Math.sin(t*24)*5:0;ctx.translate(Math.sin(t*.17)*2+shake,Math.cos(t*.11)*1.1);ground(ctx,kind,t,ch);if(isIsland)islandAction(ctx,kind,t,local);else if(['city','map','valley','farm','build','warning','countdown'].includes(kind))person(ctx,480+Math.sin(local*.35)*125,422,1.1,t,false);else person(ctx,600+Math.sin(local*.28)*95,655,.85,t,true);hud(ctx,ch);
+  function draw(ctx,t,data){let ch=data.chapters.find(c=>t>=c.start&&t<c.end)||data.chapters[data.chapters.length-1],kind=ch.kind||'city',local=t-ch.start,isIsland=ISLAND.has(kind);ctx.save();let shake=kind==='impact'?Math.sin(t*24)*5:0;ctx.translate(Math.sin(t*.17)*2+shake,Math.cos(t*.11)*1.1);ground(ctx,kind,t,ch);if(isIsland)islandAction(ctx,kind,t,local,ch);else if(['city','map','valley','farm','build','warning','countdown'].includes(kind))person(ctx,480+Math.sin(local*.35)*125,422,1.1,t,false);else person(ctx,600+Math.sin(local*.28)*95,655,.85,t,true);hud(ctx,ch);
     if(t<4){ctx.save();ctx.fillStyle='rgba(20,21,29,.20)';ctx.fillRect(0,0,W,H);ctx.font='900 58px Rubik';ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineWidth=12;ctx.lineJoin='round';ctx.strokeStyle='#171617';const title=isIsland?'100 ДНЕЙ ДО СПАСЕНИЯ':'ЧЕРЕЗ ГОД';ctx.strokeText(title,W/2,232);ctx.fillStyle='#fff';ctx.fillText(title,W/2,232);ctx.restore()}
     // controlled cinematic vignette and dust; deterministic seed avoids frame flicker
     const vg=ctx.createRadialGradient(W/2,H/2,240,W/2,H/2,800);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(18,15,17,.30)');ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);
