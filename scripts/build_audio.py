@@ -24,7 +24,7 @@ def main():
         available=max(.1,dur-.16); spans=available*weights/weights.sum(); st=cursor+.055
         for p,span in zip(parts,spans):
             words.append({'text':p,'start':round(st,3),'end':round(st+span,3),'segment':i});st+=span
-        chapters.append({'index':i,'start':round(cursor,3),'end':round(cursor+dur,3),'title':item['place'],'day':item['day'],'money':item.get('money',item.get('metric','')),'metricLabel':item.get('metricLabel','БЮДЖЕТ'),'audio':f'clip_{i+1:02d}.mp3','text':sentence,'kind':item['kind']})
+        chapters.append({'index':i,'start':round(cursor,3),'end':round(cursor+dur,3),'title':item['place'],'day':item['day'],'money':item.get('money',item.get('metric','')),'metricLabel':item.get('metricLabel','БЮДЖЕТ'),'location':item.get('location',''),'audio':f'clip_{i+1:02d}.mp3','text':sentence,'kind':item['kind']})
         cursor+=dur+.12
     total=cursor-.12
     # Assemble PCM narration with tiny interchapter breath gaps.
