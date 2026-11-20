@@ -13,6 +13,9 @@
     "render:pizzeria": "PROJECT=pizzeria node scripts/render_video.js",
     "test:pizzeria": "PROJECT=pizzeria node scripts/smoke_test.js",
     "test:pizzeria2": "PROJECT=pizzeria2 node scripts/smoke_test.js",
+    "build:pizzeria3": "PROJECT=pizzeria3 .venv/bin/python scripts/build_audio.py",
+    "render:pizzeria3": "PROJECT=pizzeria3 node scripts/render_video.js",
+    "test:pizzeria3": "PROJECT=pizzeria3 node scripts/smoke_test.js",
     "start": "node server.js",
     "test": "node scripts/smoke_test.js"
   },

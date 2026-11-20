@@ -1,13 +1,14 @@
 const fs=require('fs'),{spawn}=require('child_process');
 const {createCanvas,GlobalFonts,loadImage}=require('@napi-rs/canvas');
-const root=__dirname+'/..',project=process.env.PROJECT||'main',island=project==='island',pizzeria=project==='pizzeria'||project==='pizzeria2',pizzeria2=project==='pizzeria2',base=island?`${root}/public/island`:project==='pizzeria2'?`${root}/public/pizzeria2`:project==='pizzeria'?`${root}/public/pizzeria`:`${root}/public`;
+const root=__dirname+'/..',project=process.env.PROJECT||'main',island=project==='island',pizzeria=project==='pizzeria'||project==='pizzeria2'||project==='pizzeria3',pizzeria2=project==='pizzeria2',pizzeria3=project==='pizzeria3',base=island?`${root}/public/island`:project==='pizzeria3'?`${root}/public/pizzeria3`:project==='pizzeria2'?`${root}/public/pizzeria2`:project==='pizzeria'?`${root}/public/pizzeria`:`${root}/public`;
 for(const [name,file] of [['Rubik',`${root}/assets/fonts/Rubik.ttf`],['Rubik',`${root}/assets/fonts/Rubik-Bold.ttf`],['Rubik',`${root}/assets/fonts/Rubik-Black.ttf`]]) GlobalFonts.registerFromPath(file,name);
 require('../public/engine.js');const engine=global.SurvivalEngine;
 const ffmpeg=`${root}/.venv/lib/python3.11/site-packages/imageio_ffmpeg/binaries/ffmpeg-linux-x86_64-v9.0.2`;
 (async()=>{
   try{
     if(island){for(const [name,file] of [['storm','storm-shipwreck.png'],['jungle','jungle-spring.png'],['rescue','rescue-dawn.png'],['night','night-camp.png'],['coral','coral-lagoon.png'],['cliff','cliff-signal.png']])engine.setBackground(name,await loadImage(`${base}/art/${file}`))}
-    if(pizzeria2){for(const [name,file] of [['pizzeria2-counter','counter-review.png'],['pizzeria2-organized','kitchen-organized.png'],['pizzeria2-rush','kitchen-rush.png']])engine.setBackground(name,await loadImage(`${base}/art/${file}`))}
+    if(pizzeria3){for(const [name,file] of [['pizzeria3-prep','prep-night.png'],['pizzeria3-oven','oven-trouble.png'],['pizzeria3-rush','sunrise-handoff.png']])engine.setBackground(name,await loadImage(`${base}/art/${file}`))}
+    else if(pizzeria2){for(const [name,file] of [['pizzeria2-counter','counter-review.png'],['pizzeria2-organized','kitchen-organized.png'],['pizzeria2-rush','kitchen-rush.png']])engine.setBackground(name,await loadImage(`${base}/art/${file}`))}
     else if(pizzeria){for(const [name,file] of [['pizzeria-home','home-dawn.png'],['pizzeria-shop','shop-dawn.png'],['pizzeria-kitchen','kitchen-day.png'],['pizzeria-counter','counter-evening.png'],['pizzeria-close','kitchen-close.png']])engine.setBackground(name,await loadImage(`${base}/art/${file}`))}
     const timeline=JSON.parse(fs.readFileSync(`${base}/timeline.json`)),{W,H,draw}=engine,fps=30,frames=Math.ceil(timeline.duration*fps),renderScale=pizzeria?1.5:1,renderW=W*renderScale,renderH=H*renderScale,canvas=createCanvas(renderW,renderH),ctx=canvas.getContext('2d'),out=`${base}/video.mp4`;
     if(renderScale!==1)ctx.scale(renderScale,renderScale);
