@@ -4,15 +4,15 @@ import os, re, json, math, subprocess
 from pathlib import Path
 import numpy as np
 from scipy.io import wavfile
-ROOT=Path(__file__).resolve().parents[1]; PROJECT=os.getenv('PROJECT','main'); SUBDIR={'island':'island','pizzeria':'pizzeria'}.get(PROJECT,''); BASE=ROOT/'public'/SUBDIR; A=BASE/'audio'; A.mkdir(parents=True,exist_ok=True); FFMPEG=str(ROOT/'.venv/lib/python3.11/site-packages/imageio_ffmpeg/binaries/ffmpeg-linux-x86_64-v9.0.2')
-STORY={'island':'island_story.json','pizzeria':'pizzeria_story.json'}.get(PROJECT,'story.json')
+ROOT=Path(__file__).resolve().parents[1]; PROJECT=os.getenv('PROJECT','main'); SUBDIR={'island':'island','pizzeria':'pizzeria','pizzeria2':'pizzeria2'}.get(PROJECT,''); BASE=ROOT/'public'/SUBDIR; A=BASE/'audio'; A.mkdir(parents=True,exist_ok=True); FFMPEG=str(ROOT/'.venv/lib/python3.11/site-packages/imageio_ffmpeg/binaries/ffmpeg-linux-x86_64-v9.0.2')
+STORY={'island':'island_story.json','pizzeria':'pizzeria_story.json','pizzeria2':'pizzeria2_story.json'}.get(PROJECT,'story.json')
 SCRIPT=json.load(open(ROOT/'scripts'/STORY,encoding='utf-8'))
 
 def run(args): subprocess.run(args,check=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
 def syllables(word):
     w=re.sub(r'[^а-яёА-ЯЁ]','',word.lower()); v='аеёиоуыэюя'; return max(1,sum(ch in v for ch in w))
 def main():
-    wavs=[]; durations=[]; tempo=.95 if PROJECT=='pizzeria' else 1.0 if PROJECT=='island' else 1.2
+    wavs=[]; durations=[]; tempo=.82 if PROJECT=='pizzeria2' else .95 if PROJECT=='pizzeria' else 1.0 if PROJECT=='island' else 1.2
     for i in range(len(SCRIPT)): 
         src=A/f'clip_{i+1:02d}.mp3'; out=A/f'_fast_{i+1:02d}.wav'
         if not src.exists(): raise FileNotFoundError(f'Missing narration clip {src.name}; synthesize clips 01–{len(SCRIPT):02d} with the selected voice first.')
@@ -34,7 +34,7 @@ def main():
     narration=np.concatenate(chunks[:-1],axis=0); wavfile.write(A/'_narration.wav',44100,narration)
     n=int(total*44100); t=np.arange(n)/44100; rng=np.random.default_rng(773); noise=rng.normal(0,1,n).astype(np.float32)
     from scipy.signal import butter,sosfilt
-    if PROJECT=='pizzeria':
+    if PROJECT in ('pizzeria','pizzeria2'):
         # Warm, restrained four-chord pulse that builds through the rush and resolves at closing.
         chords=np.array([220.00,196.00,174.61,261.63]); root=chords[(t//8).astype(np.int32)%len(chords)]
         music=.018*np.sin(2*np.pi*root*t)+.011*np.sin(2*np.pi*root*1.5*t)+.009*np.sin(2*np.pi*root*2*t)
@@ -58,6 +58,26 @@ def main():
         fx[a:z]+=amount*env*sig
     for ch in chapters:
         st=ch['start']; kind=ch['kind'].removeprefix('island_')
+        if PROJECT in ('pizzeria','pizzeria2') and kind.startswith('pizzeria2_'):
+            relative=st/max(total,1)
+            # Restrained restaurant ambience cues follow the visible actions.
+            if kind in ('pizzeria2_hook','pizzeria2_reply'):
+                for q in range(3):add_burst(st+.45+q*.65,.14,.045,'tone',1700)
+            elif kind in ('pizzeria2_open','pizzeria2_setup'):
+                add_burst(st+1,.10,.045,'tone',1300);add_burst(st+5,.5,.035,'noise',950)
+            elif kind=='pizzeria2_audit':
+                for q in range(4):add_burst(st+3+q*4,.08,.04,'noise',2100)
+            elif kind=='pizzeria2_order':
+                add_burst(st+2,.12,.05,'noise',1800);add_burst(st+8,.35,.045,'noise',1100)
+            elif kind=='pizzeria2_bake':
+                add_burst(st+8,.22,.04,'noise',800);add_burst(st+20,.18,.05,'tone',1250)
+            elif kind=='pizzeria2_rush':
+                for q in (3,10,18,27,38):add_burst(st+q,.16,.045,'tone',1550)
+            elif kind=='pizzeria2_montage':
+                for q in range(6):add_burst(st+3+q*5,.12,.025,'noise',1400)
+            elif kind=='pizzeria2_cliffhanger':
+                for q in range(3):add_burst(st+2+q*.7,.16,.05,'tone',1600)
+            continue
         if PROJECT=='pizzeria' and kind.startswith('pizzeria_'):
             if kind=='pizzeria_hook':
                 for q in range(3):add_burst(st+.5+q*.55,.16,.05,'tone',1700)
@@ -100,7 +120,7 @@ def main():
     run([FFMPEG,'-y','-i',str(A/'_narration.wav'),'-i',str(A/'_score.wav'),'-filter_complex','[0:a]volume=1.0[n];[1:a]volume=0.62[m];[n][m]amix=inputs=2:duration=first:dropout_transition=2,alimiter=limit=0.92[out]','-map','[out]','-ar','44100','-ac','2','-c:a','pcm_s16le',str(A/'master.wav')])
     run([FFMPEG,'-y','-i',str(A/'master.wav'),'-codec:a','libmp3lame','-b:a','192k',str(A/'master.mp3')])
     if PROJECT=='pizzeria':run([FFMPEG,'-y','-i',str(A/'_narration.wav'),'-codec:a','libmp3lame','-b:a','192k',str(A/'voiceover.mp3')])
-    width,height=(3840,2160) if PROJECT=='pizzeria' else (1920,1080)
+    width,height=(3840,2160) if PROJECT in ('pizzeria','pizzeria2') else (1920,1080)
     json.dump({'width':width,'height':height,'fps':30,'duration':round(total,3),'chapters':chapters,'words':words},open(BASE/'timeline.json','w',encoding='utf-8'),ensure_ascii=False,indent=2)
     print(f'Created {len(words)} word cues, {len(chapters)} chapters, {total:.2f}s master')
 if __name__=='__main__':main()
