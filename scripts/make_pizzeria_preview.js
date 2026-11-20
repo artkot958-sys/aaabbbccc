@@ -1,0 +1,20 @@
+const fs=require('fs');
+const {createCanvas,GlobalFonts,loadImage}=require('@napi-rs/canvas');
+const root=__dirname+'/..',base=`${root}/public/pizzeria`;
+for(const f of ['Rubik.ttf','Rubik-Bold.ttf','Rubik-Black.ttf'])GlobalFonts.registerFromPath(`${root}/assets/fonts/${f}`,'Rubik');
+require('../public/engine.js');
+const engine=global.SurvivalEngine;
+(async()=>{
+  for(const [name,file] of [['pizzeria-home','home-dawn.png'],['pizzeria-shop','shop-dawn.png'],['pizzeria-kitchen','kitchen-day.png'],['pizzeria-counter','counter-evening.png'],['pizzeria-close','kitchen-close.png']])engine.setBackground(name,await loadImage(`${base}/art/${file}`));
+  const data=JSON.parse(fs.readFileSync(`${base}/timeline.json`,'utf8')),chapter=data.chapters.find(c=>c.kind==='pizzeria_rush');
+  const canvas=createCanvas(1280,720),ctx=canvas.getContext('2d');
+  engine.draw(ctx,chapter.start+(chapter.end-chapter.start)*.66,data);
+  const x=36,y=164,w=520,h=232;ctx.beginPath();ctx.roundRect(x,y,w,232,22);ctx.fillStyle='rgba(10,16,22,.82)';ctx.fill();ctx.beginPath();ctx.roundRect(x,y,11,232,6);ctx.fillStyle='#e0a13f';ctx.fill();
+  ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.shadowColor='rgba(0,0,0,.7)';ctx.shadowBlur=8;
+  ctx.font='900 21px Rubik';ctx.fillStyle='#efbf69';ctx.fillText('ПИЦЦЕРИЯ С НУЛЯ',66,204);
+  ctx.font='900 76px Rubik';ctx.lineJoin='round';ctx.lineWidth=7;ctx.strokeStyle='#1b1b1b';ctx.strokeText('12 ЧАСОВ',64,291);ctx.fillStyle='#fff4e2';ctx.fillText('12 ЧАСОВ',64,291);
+  ctx.font='900 37px Rubik';ctx.lineWidth=5;ctx.strokeText('ОДИН НА КУХНЕ',66,350);ctx.fillStyle='#efb247';ctx.fillText('ОДИН НА КУХНЕ',66,350);
+  ctx.shadowBlur=0;fs.writeFileSync(`${base}/thumbnail.png`,canvas.toBuffer('image/png'));
+  fs.writeFileSync(`${base}/poster.png`,canvas.toBuffer('image/png'));
+  console.log('Created 1280x720 thumbnail and player poster.');
+})().catch(e=>{console.error(e);process.exit(1)});

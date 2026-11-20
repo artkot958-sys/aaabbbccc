@@ -9,6 +9,9 @@
     "build:island": "PROJECT=island .venv/bin/python scripts/build_audio.py",
     "render:island": "PROJECT=island node scripts/render_video.js",
     "test:island": "PROJECT=island node scripts/smoke_test.js",
+    "build:pizzeria": "PROJECT=pizzeria .venv/bin/python scripts/build_audio.py",
+    "render:pizzeria": "PROJECT=pizzeria node scripts/render_video.js",
+    "test:pizzeria": "PROJECT=pizzeria node scripts/smoke_test.js",
     "start": "node server.js",
     "test": "node scripts/smoke_test.js"
   },

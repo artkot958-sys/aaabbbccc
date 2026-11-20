@@ -8,3 +8,6 @@ __pycache__/
 public/audio/master.wav
 public/island/audio/_*.wav
 public/island/audio/master.wav
+public/pizzeria/audio/_*.wav
+public/pizzeria/audio/master.wav
+public/pizzeria/video.mp4
